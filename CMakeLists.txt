@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.8.0)
-project(libxpcsc)
+project(xpcsc)
+
 set(CMAKE_C_STANDARD 17)
 if (POLICY CMP0092)
     cmake_policy(SET CMP0092 NEW)
