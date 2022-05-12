@@ -23,7 +23,9 @@ add_library(${PROJECT_NAME}
         src/exceptions.cpp
         src/format.cpp
         src/parse_apdu.cpp
-        src/aids.cpp src/aids.hpp)
+        src/aids.cpp
+        src/aids.hpp
+        src/constants.hpp)
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC
@@ -33,18 +35,18 @@ target_include_directories(${PROJECT_NAME}
 # PC/SC API dependencies.
 
 add_library(pcsc INTERFACE)
-if(MSVC)
+if (MSVC)
     # no extra includes required
     target_link_libraries(pcsc INTERFACE winscard)
-elseif(APPLE)
+elseif (APPLE)
     # no extra includes required
     target_link_libraries(pcsc INTERFACE "-framework PCSC")
-else()
+else ()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(PCSC libpcsclite REQUIRED)
     target_include_directories(${PROJECT_NAME} PRIVATE ${PCSC_INCLUDE_DIRS})
     target_link_libraries(pcsc INTERFACE ${PCSC_LIBRARIES})
-endif()
+endif ()
 
 add_executable(main src/main.cpp)
 target_link_libraries(main ${PROJECT_NAME} pcsc xpcsc)

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2022, Mikhail Vorontsov <mikhail.vorontsov@gmail.com>
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *     * Neither the name of the <organization> nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,51 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
-#include "xpcsc.hpp"
-#include "aids.hpp"
+#ifndef XPCSC_CONSTANTS_HPP
+#define XPCSC_CONSTANTS_HPP
 
-int main()
-{
-    std::vector<xpcsc::Bytes> aids;
-    xpcsc::Connection c;
+#include <xpcsc.hpp>
 
-    try {
-        c.init();
-    } catch (xpcsc::PCSCError &e) {
-        std::cerr << "[Error] Connection to PC/SC failed: " << e.what() << std::endl;
-        return 1;
-    }
-    // get readers list
-    auto readers = c.readers();
-    if (readers.empty()) {
-        std::cerr << "[Error] No connected readers" << std::endl;
-        return 1;
-    } else {
-        std::cout << "Readers count : " << readers.size() << std::endl;
-    }
-    try {
-        for (const auto &r: readers) {
-            if (r == "ACS ACR1281 1S Dual Reader(2)") {
-                while (true) {
-                    xpcsc::Reader reader = c.wait_for_reader_card(r);
-                    std::cout << reader.handle << std::endl;
-                    for (const auto &aid: xpcsc::aids()) {
-                        std::cout << "IN" << std::endl;
-//                        if (read_app(c, reader, aid)) {
-//                            break;
-//                        }
-                    }
-                    c.wait_for_card_remove(r);
-//                    reader.handle = 0;
-                    // TODO: Непонятно пока, нужно лы вызывать этот метод
-                    c.disconnect_card(reader, SCARD_LEAVE_CARD);
-                }
-            }
-        }
-    } catch (xpcsc::PCSCError &e) {
-        std::cerr << "Wait for card failed: " << e.what() << std::endl;
-        return 1;
-    }
-    return 0;
-}
+#define CHECK_BIT(value, b) (((value) >> (b))&1)
+
+const xpcsc::Bytes TAG_EMV_FCI = {0x6F};
+const xpcsc::Bytes TAG_EMV_FCI_PD = {0xA5};
+const xpcsc::Bytes TAG_EMV_FCI_SFI = {0x88};
+const xpcsc::Bytes TAG_PSD_REC = {0x70};
+const xpcsc::Bytes TAG_PSD_TAG = {0x61};
+const xpcsc::Bytes TAG_PSD_AID_TAG = {0x4F};
+const xpcsc::Bytes TAG_EMV_FCI_APP_LABEL = {0x50};
+const xpcsc::Bytes TAG_EMV_FCI_APP_PDOL = {0x9F, 0x38};
+
+const xpcsc::Bytes TAG_PRIM = {0x80};
+const xpcsc::Bytes TAG_STRUCT = {0x77};
+
+const xpcsc::Bytes TAG_EMV_AIP = {0x82};
+const xpcsc::Bytes TAG_EMV_AFL = {0x94};
+
+#endif //XPCSC_CONSTANTS_HPP
