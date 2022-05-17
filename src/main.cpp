@@ -28,6 +28,7 @@
 #include <iostream>
 #include "xpcsc.hpp"
 #include "aids.hpp"
+#include "card_apps.hpp"
 
 int main()
 {
@@ -54,14 +55,27 @@ int main()
                 while (true) {
                     xpcsc::Reader reader = c.wait_for_reader_card(r);
                     std::cout << reader.handle << std::endl;
-                    for (const auto &aid: xpcsc::aids()) {
-                        std::cout << "IN" << std::endl;
-//                        if (read_app(c, reader, aid)) {
-//                            break;
-//                        }
+                    auto apps = xpcsc::read_apps_from_pse(c, reader);
+
+                    std::cout << "AID APPS" << std::endl;
+
+                    for (const auto ap: apps) {
+                        std::cout << xpcsc::format(ap);
+                    }
+                    std::cout << std::endl << std::flush;
+                    if (!apps.empty()) {
+                        for (const auto &aid: apps) {
+                            auto b = xpcsc::read_app(c, reader, aid);
+                        }
+                    } else {
+                        for (const auto &aid: xpcsc::aids()) {
+                            std::cout << "IN" << std::endl;
+                            if (xpcsc::read_app(c, reader, aid)) {
+                                break;
+                            }
+                        }
                     }
                     c.wait_for_card_remove(r);
-//                    reader.handle = 0;
                     // TODO: Непонятно пока, нужно лы вызывать этот метод
                     c.disconnect_card(reader, SCARD_LEAVE_CARD);
                 }
