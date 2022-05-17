@@ -28,180 +28,205 @@
 #ifndef _H_7a75aca51ebac9ef34833761fe6b11e0
 #define _H_7a75aca51ebac9ef34833761fe6b11e0
 
-#include <stdexcept>
-#include <vector>
-#include <string>
 #include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #ifdef __APPLE__
+
 #include <PCSC/pcsclite.h>
 #include <PCSC/winscard.h>
 #include <PCSC/wintypes.h>
+
 #else
 #include <pcsclite.h>
 #include <winscard.h>
 #include <wintypes.h>
 #endif
 
-#define PCSC_CALL(f) do {long _result = (f);  handle_pcsc_response_code(_result); } while (0)
+#define PCSC_CALL(f)                                                                                                   \
+	do {                                                                                                               \
+		long _result = (f);                                                                                            \
+		handle_pcsc_response_code(_result);                                                                            \
+	} while (0)
 
 namespace xpcsc {
 
-typedef uint8_t Byte;
-typedef std::basic_string<Byte> Bytes;
-typedef std::vector<std::string> Strings;
-typedef std::unique_ptr<Bytes> UPBytes;
+	typedef uint8_t Byte;
+	typedef std::basic_string<Byte> Bytes;
+	typedef std::vector<std::string> Strings;
+	typedef std::unique_ptr<Bytes> UPBytes;
 
-struct Reader {
-    SCARDHANDLE handle;
-    SCARD_IO_REQUEST *send_pci;
-};
+	struct Reader {
+		SCARDHANDLE handle;
+		SCARD_IO_REQUEST* send_pci;
+	};
 
-// ATR features constants
-typedef enum { 
-    // smart card with contacts
-    ATR_FEATURE_ICC,
-    // proximity card
-    ATR_FEATURE_PICC,
-    // Mifare cards
-    ATR_FEATURE_MIFARE_1K,
-    ATR_FEATURE_MIFARE_4K,
-    ATR_FEATURE_INFINEON_SLE_66R35 
-} ATRFeature;
+	// ATR features constants
+	typedef enum {
+		// smart card with contacts
+		ATR_FEATURE_ICC,
+		// proximity card
+		ATR_FEATURE_PICC,
+		// Mifare cards
+		ATR_FEATURE_MIFARE_1K,
+		ATR_FEATURE_MIFARE_4K,
+		ATR_FEATURE_INFINEON_SLE_66R35
+	} ATRFeature;
 
-/*
+	/*
  * Incapsulates pcsc-lite error
  */
-class PCSCError : public std::runtime_error {
-public:
-    PCSCError(long);
-    long code() const throw ();
-    virtual const char* what() const throw ();
-private:
-    long pcsc_code;
-};
+	class PCSCError : public std::runtime_error {
+	public:
+		PCSCError(long);
 
-class ConnectionError : public std::runtime_error {
-public:
-    ConnectionError(const char * what);
-};
+		long code() const throw();
 
+		virtual const char* what() const throw();
 
-class Connection {
-    /*
-     * Incapsulates pcsc-lite library
-     */
-public:
-    Connection();
+	private:
+		long pcsc_code;
+	};
 
-    ~Connection();
+	class ConnectionError : public std::runtime_error {
+	public:
+		ConnectionError(const char* what);
+	};
 
-    void init();
+	class Connection {
+		/*
+         * Incapsulates pcsc-lite library
+         */
+	private:
+		Connection();
 
-    Strings readers();
+	public:
+		static Connection& get() {
 
-    Reader wait_for_reader_card(const std::string & reader_name, DWORD preferred_protocols = SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1);
+			static Connection instance;
+			return instance;
+		}
 
-    void wait_for_card_remove(const std::string & reader_name);
+		~Connection();
 
-    void disconnect_card(const Reader & reader, DWORD disposition = SCARD_RESET_CARD);
+		void init();
 
-    Bytes atr(const Reader & reader);
+		Strings readers();
 
-    void transmit(const Reader & reader, const Bytes & command, Bytes * response = 0);
+		Reader wait_for_reader_card(const std::string& reader_name,
+									DWORD preferred_protocols = SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1);
 
-    static uint16_t response_status(const Bytes & response);
-    static std::string response_status_str(const Bytes & response);
-    static Bytes response_data(const Bytes & response);
+		void wait_for_card_remove(const std::string& reader_name);
 
-private:
-    struct Private;
-    Private * p;
+		void disconnect_card(const Reader& reader, DWORD disposition = SCARD_RESET_CARD);
 
-    void handle_pcsc_response_code(long response);
-    void release_context();
-    // void release_card_handle();
-};
+		Bytes atr(const Reader& reader);
 
-class ATRParseError : public std::runtime_error {
-public:
-    ATRParseError(const char * what);
-};
+		void transmit(const Reader& reader, const Bytes& command, Bytes* response = 0);
 
-class ATRParser
-{
-public:
-    ATRParser();
-    ATRParser(const Bytes & bytes);
-    ~ATRParser();
+		static uint16_t response_status(const Bytes& response);
 
-    std::string str() const;
+		static std::string response_status_str(const Bytes& response);
 
-    void load(const Bytes & bytes);
+		static Bytes response_data(const Bytes& response);
 
-    bool checkFeature(ATRFeature);
+	private:
+		struct Private;
+		Private* p;
 
-private:
-    struct Private;
-    Private * p;
-};
+		void handle_pcsc_response_code(long response);
 
+		void release_context();
+		// void release_card_handle();
+	};
 
-typedef enum { 
-    FormatHex = 0,  // HEX, like "01 ef 4d"
-    FormatC,    // C, like "0x01 0xef 0x4d"
-    FormatE     // string escaped, like "\x01\xef\x4d"
-} FormatOptions;
+	class ATRParseError : public std::runtime_error {
+	public:
+		ATRParseError(const char* what);
+	};
 
-typedef Byte BlocksAccessBits[4];
+	class ATRParser {
+	public:
+		ATRParser();
 
-class APDUParseError : public std::runtime_error {
-public:
-    APDUParseError(const char * what);
-};
+		ATRParser(const Bytes& bytes);
 
-Bytes parse_apdu(const std::string & apdu);
+		~ATRParser();
 
-bool parse_access_bits(Byte b7, Byte b8, BlocksAccessBits * bits);
+		std::string str() const;
 
+		void load(const Bytes& bytes);
 
-// BER-TLV
-class BERTLVParseError : public std::runtime_error {
-public:
-    BERTLVParseError(const char * what);
-};
+		bool checkFeature(ATRFeature);
 
-class BerTlv;
-typedef std::shared_ptr<BerTlv> BerTlvRef;
-typedef std::vector<BerTlvRef> BerTlvList;
+	private:
+		struct Private;
+		Private* p;
+	};
 
-typedef BerTlv * PBerTlv;
+	typedef enum {
+		FormatHex = 0, // HEX, like "01 ef 4d"
+		FormatC,	   // C, like "0x01 0xef 0x4d"
+		FormatE		   // string escaped, like "\x01\xef\x4d"
+	} FormatOptions;
 
-class BerTlv {
-public:
-    static PBerTlv parse(const Bytes & data);
-    ~BerTlv();
+	typedef Byte BlocksAccessBits[4];
 
-    const BerTlvList & get_children() const;
-    const Bytes & get_tag() const;
-    const Bytes & get_data() const;
-    bool is_raw() const;
-    const BerTlvRef find_by_tag(const Bytes & tag) const;
+	class APDUParseError : public std::runtime_error {
+	public:
+		APDUParseError(const char* what);
+	};
 
-private:
-    BerTlv(const Bytes & tag, const Bytes & data);
+	Bytes parse_apdu(const std::string& apdu);
 
-    Bytes tag;
-    Bytes data;
-    bool raw;
-    BerTlvList children;
-};
+	bool parse_access_bits(Byte b7, Byte b8, BlocksAccessBits* bits);
 
+	// BER-TLV
+	class BERTLVParseError : public std::runtime_error {
+	public:
+		BERTLVParseError(const char* what);
+	};
 
-std::string format(const Bytes &, FormatOptions fo = FormatHex);
-std::string format(const Byte &, FormatOptions fo = FormatHex);
-std::string format(const BerTlv &, FormatOptions fo = FormatHex);
+	class BerTlv;
 
-}
+	typedef std::shared_ptr<BerTlv> BerTlvRef;
+	typedef std::vector<BerTlvRef> BerTlvList;
+
+	typedef BerTlv* PBerTlv;
+
+	class BerTlv {
+	public:
+		static PBerTlv parse(const Bytes& data);
+
+		~BerTlv();
+
+		const BerTlvList& get_children() const;
+
+		const Bytes& get_tag() const;
+
+		const Bytes& get_data() const;
+
+		bool is_raw() const;
+
+		const BerTlvRef find_by_tag(const Bytes& tag) const;
+
+	private:
+		BerTlv(const Bytes& tag, const Bytes& data);
+
+		Bytes tag;
+		Bytes data;
+		bool raw;
+		BerTlvList children;
+	};
+
+	std::string format(const Bytes&, FormatOptions fo = FormatHex);
+
+	std::string format(const Byte&, FormatOptions fo = FormatHex);
+
+	std::string format(const BerTlv&, FormatOptions fo = FormatHex);
+
+} // namespace xpcsc
 
 #endif

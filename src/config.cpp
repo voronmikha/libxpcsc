@@ -25,21 +25,31 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef XPCSC_CARD_HPP
-#define XPCSC_CARD_HPP
-
-#include <map>
-#include <string>
-
-#include "xpcsc.hpp"
+#include "config.hpp"
 
 namespace xpcsc {
-	class Card {
-	public:
-		virtual bool decode() = 0;
-		virtual bool encode() = 0;
-		virtual std::map<std::string, std::string> info() = 0;
-	};
+	Config& Config::setContactLess(bool contactLess) {
+		contactLess_ = contactLess;
+		return *this;
+	}
+	Config& Config::setReadTransactions(bool readTransactions) {
+		readTransactions_ = readTransactions;
+		return *this;
+	}
+	Config& Config::setReadAllAids(bool readAllAids) {
+		readAllAids_ = readAllAids;
+		return *this;
+	}
+	Config& Config::setReadAt(bool readAt) {
+		readAt_ = readAt;
+		return *this;
+	}
+	Config& Config::setReadCplc(bool readCplc) {
+		readCplc_ = readCplc;
+		return *this;
+	}
+	Config& Config::setRemoveDefaultParsers(bool removeDefaultParsers) {
+		removeDefaultParsers_ = removeDefaultParsers;
+		return *this;
+	}
 } // namespace xpcsc
-
-#endif //XPCSC_CARD_HPP

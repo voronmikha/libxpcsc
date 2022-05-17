@@ -25,21 +25,25 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef XPCSC_CARD_HPP
-#define XPCSC_CARD_HPP
+#ifndef XPCSC_PARSER_HPP
+#define XPCSC_PARSER_HPP
 
-#include <map>
-#include <string>
-
-#include "xpcsc.hpp"
+#include "card.hpp"
+#include "config.hpp"
 
 namespace xpcsc {
-	class Card {
+
+	class Parser {
 	public:
-		virtual bool decode() = 0;
-		virtual bool encode() = 0;
-		virtual std::map<std::string, std::string> info() = 0;
+		std::shared_ptr<xpcsc::Card> readCard() { return card_; }
+		Parser& setConfig(const Config& config);
+	private:
+
+	private:
+		Config config_;
+		std::shared_ptr<xpcsc::Card> card_;
 	};
+
 } // namespace xpcsc
 
-#endif //XPCSC_CARD_HPP
+#endif //XPCSC_PARSER_HPP

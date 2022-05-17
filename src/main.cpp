@@ -26,64 +26,78 @@
  */
 
 #include <iostream>
-#include "xpcsc.hpp"
+
 #include "aids.hpp"
 #include "card_apps.hpp"
+#include "config.hpp"
+#include "parser.hpp"
+#include "xpcsc.hpp"
 
-int main()
-{
-    std::vector<xpcsc::Bytes> aids;
-    xpcsc::Connection c;
+int main() {
+	std::vector<xpcsc::Bytes> aids;
+	xpcsc::Parser prsr;
+	xpcsc::Config config = xpcsc::Config::get()
+							   .setContactLess(false)
+							   .setReadTransactions(false)
+							   .setReadAllAids(false)
+							   .setReadAt(false)
+							   .setReadCplc(false)
+							   .setRemoveDefaultParsers(false);
 
-    try {
+	prsr.setConfig(config);
+	//    xpcsc::Connection c = xpcsc::Connection::get();
+
+	/*    try {
         c.init();
     } catch (xpcsc::PCSCError &e) {
         std::cerr << "[Error] Connection to PC/SC failed: " << e.what() << std::endl;
         return 1;
-    }
-    // get readers list
-    auto readers = c.readers();
-    if (readers.empty()) {
-        std::cerr << "[Error] No connected readers" << std::endl;
-        return 1;
-    } else {
-        std::cout << "Readers count : " << readers.size() << std::endl;
-    }
-    try {
-        for (const auto &r: readers) {
-            if (r == "ACS ACR1281 1S Dual Reader(2)") {
-                while (true) {
-                    xpcsc::Reader reader = c.wait_for_reader_card(r);
-                    std::cout << reader.handle << std::endl;
-                    auto apps = xpcsc::read_apps_from_pse(c, reader);
+    }*/
+	// get readers list
+	auto readers = xpcsc::Connection::get().readers();
+	if (readers.empty()) {
+		std::cerr << "[Error] No connected readers" << std::endl;
+		//        TODO: Нужно добавить коды и описание ошибок
+		throw xpcsc::PCSCError(1L);
+	} else {
+		std::cout << "Readers count : " << readers.size() << std::endl;
+	}
+	try {
+		for (const auto& r : readers) {
+			if (r == "ACS ACR1281 1S Dual Reader(2)") {
+				while (true) {
 
-                    std::cout << "AID APPS" << std::endl;
+					xpcsc::Reader reader = xpcsc::Connection::get().wait_for_reader_card(r);
+					std::cout << reader.handle << std::endl;
+					xpcsc::Parser parser;
+					auto card = parser.readCard();
+					auto apps = xpcsc::read_apps_from_pse(xpcsc::Connection::get(), reader);
 
-                    for (const auto ap: apps) {
-                        std::cout << xpcsc::format(ap);
-                    }
-                    std::cout << std::endl << std::flush;
-                    if (!apps.empty()) {
-                        for (const auto &aid: apps) {
-                            auto b = xpcsc::read_app(c, reader, aid);
-                        }
-                    } else {
-                        for (const auto &aid: xpcsc::aids()) {
-                            std::cout << "IN" << std::endl;
-                            if (xpcsc::read_app(c, reader, aid)) {
-                                break;
-                            }
-                        }
-                    }
-                    c.wait_for_card_remove(r);
-                    // TODO: Непонятно пока, нужно лы вызывать этот метод
-                    c.disconnect_card(reader, SCARD_LEAVE_CARD);
-                }
-            }
-        }
-    } catch (xpcsc::PCSCError &e) {
-        std::cerr << "Wait for card failed: " << e.what() << std::endl;
-        return 1;
-    }
-    return 0;
+					std::cout << "AID APPS" << std::endl;
+
+					for (const auto ap : apps) {
+						std::cout << xpcsc::format(ap);
+					}
+					std::cout << std::endl << std::flush;
+					if (!apps.empty()) {
+						for (const auto& aid : apps) {
+							auto b = xpcsc::read_app(xpcsc::Connection::get(), reader, aid);
+						}
+					} else {
+						for (const auto& aid : xpcsc::aids()) {
+							std::cout << "IN" << std::endl;
+							if (xpcsc::read_app(xpcsc::Connection::get(), reader, aid)) { break; }
+						}
+					}
+					xpcsc::Connection::get().wait_for_card_remove(r);
+					// TODO: Непонятно пока, нужно лы вызывать этот метод
+					xpcsc::Connection::get().disconnect_card(reader, SCARD_LEAVE_CARD);
+				}
+			}
+		}
+	} catch (xpcsc::PCSCError& e) {
+		std::cerr << "Wait for card failed: " << e.what() << std::endl;
+		return 1;
+	}
+	return 0;
 }

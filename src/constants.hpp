@@ -30,7 +30,7 @@
 
 #include <xpcsc.hpp>
 
-#define CHECK_BIT(value, b) (((value) >> (b))&1)
+#define CHECK_BIT(value, b) (((value) >> (b)) & 1)
 
 const xpcsc::Bytes TAG_EMV_FCI = {0x6F};
 const xpcsc::Bytes TAG_EMV_FCI_PD = {0xA5};

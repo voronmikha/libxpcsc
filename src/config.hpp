@@ -25,21 +25,56 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef XPCSC_CARD_HPP
-#define XPCSC_CARD_HPP
-
-#include <map>
-#include <string>
-
-#include "xpcsc.hpp"
+#ifndef XPCSC_CONFIG_HPP
+#define XPCSC_CONFIG_HPP
 
 namespace xpcsc {
-	class Card {
+
+	class Config {
 	public:
-		virtual bool decode() = 0;
-		virtual bool encode() = 0;
-		virtual std::map<std::string, std::string> info() = 0;
+		static Config& get() {
+			static Config instance;
+			return instance;
+		}
+		Config& setContactLess(bool contactLess);
+		Config& setReadTransactions(bool readTransactions);
+		Config& setReadAllAids(bool readAllAids);
+		Config& setReadAt(bool readAt);
+		Config& setReadCplc(bool readCplc);
+		Config& setRemoveDefaultParsers(bool removeDefaultParsers);
+
+	private:
+		/**
+         * use contact less mode
+         */
+		bool contactLess_ = true;
+
+		/**
+         * Boolean to indicate if the parser need to read transaction history
+         */
+		bool readTransactions_ = true;
+
+		/**
+         * Boolean used to indicate if you want to read all card aids
+         */
+		bool readAllAids_ = true;
+
+		/**
+         * Boolean used to indicate if you want to extract ATS or ATR
+         */
+		bool readAt_ = true;
+
+		/**
+         * Boolean used to indicate if you want to read CPLC data
+         */
+		bool readCplc_ = false;
+
+		/**
+         * Boolean used to indicate to not add provided parser implementation
+         */
+		bool removeDefaultParsers_ = false;
 	};
+
 } // namespace xpcsc
 
-#endif //XPCSC_CARD_HPP
+#endif //XPCSC_CONFIG_HPP

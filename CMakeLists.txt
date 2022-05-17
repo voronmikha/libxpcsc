@@ -25,7 +25,7 @@ add_library(${PROJECT_NAME}
         src/parse_apdu.cpp
         src/aids.cpp
         src/aids.hpp
-        src/constants.hpp src/card.cpp src/card.hpp src/card_apps.cpp src/card_apps.hpp)
+        src/constants.hpp src/card.cpp src/card.hpp src/card_apps.cpp src/card_apps.hpp src/parser.cpp src/parser.hpp src/config.cpp src/config.hpp)
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC

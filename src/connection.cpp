@@ -54,6 +54,7 @@ namespace xpcsc {
     Connection::Connection()
     {
         p = new Private;
+        init();
     }
 
     Connection::~Connection()
