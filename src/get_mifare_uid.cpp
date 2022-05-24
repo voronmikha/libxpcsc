@@ -90,15 +90,28 @@ int main(int argc, char** argv) {
 	char name_reader[256];
 	int list_count = 0;
 	int offset = 0;
+	char* ptr_readers = (char*)malloc(1024);
 	//	TODO: Похоже, что readers_size-1 это потому что медод возвращает на 1 символ больше
 	for (size_t counter = 0; counter < readers_size - 1; ++counter) {
 		if (readers[counter] != '\0') {
 			name_reader[offset++] = readers[counter];
+			*ptr_readers++ = readers[counter];
 		} else {
 			strcpy(READER_LIST[list_count++], name_reader);
 			offset = 0;
+			*ptr_readers++ = '\0';
 		}
 	}
+
+	printf("\n\nPTR PTR PTR\n\n");
+	printf("%s", ptr_readers - ((readers_size - 1)) + 30*2);
+	printf("\n\nPTR PTR PTR\n\n");
+
+	for (int i = 0; i < 3; ++i) {
+		printf("%s\n", READER_LIST[i]);
+	}
+	printf("++++++++++++++++++++\n");
+
 	printf("\n++++++++++++++++++++\n");
 	for (int i = 0; i < 3; ++i) {
 		printf("%s\n", READER_LIST[i]);
