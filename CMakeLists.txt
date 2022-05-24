@@ -25,7 +25,7 @@ add_library(${PROJECT_NAME}
         src/parse_apdu.cpp
         src/aids.cpp
         src/aids.hpp
-        src/constants.hpp src/card.cpp src/card.hpp src/card_apps.cpp src/card_apps.hpp src/parser.cpp src/parser.hpp src/config.cpp src/config.hpp)
+        src/constants.hpp src/card.cpp src/card.hpp src/card_apps.cpp src/card_apps.hpp src/parser.cpp src/parser.hpp src/config.cpp src/config.hpp src/mifaire.cpp src/get_mifare_uid.cpp)
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC
@@ -50,3 +50,9 @@ endif ()
 
 add_executable(main src/main.cpp)
 target_link_libraries(main ${PROJECT_NAME} pcsc xpcsc)
+
+add_executable(mifaire src/mifaire.cpp)
+target_link_libraries(mifaire ${PROJECT_NAME} pcsc xpcsc)
+
+add_executable(mifare_uid src/get_mifare_uid.cpp util/print_bytes.c)
+target_link_libraries(mifare_uid ${PROJECT_NAME} pcsc xpcsc)
