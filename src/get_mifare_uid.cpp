@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 		printf("%s\n", pcsc_stringify_error(result));
 		return 1;
 	}
-	printf("Connection to PC/SC established\n");
+	printf("\nConnection to PC/SC established");
 
 	// calculate required memory size for a list of readers
 	DWORD readers_size = 0;
@@ -88,16 +88,22 @@ int main(int argc, char** argv) {
 	char READER_LIST[3][256];
 
 	char name_reader[256];
+	int list_count = 0;
 	int offset = 0;
-	//	TODO: Похоже, что readers_size-1 это потому что медод возвращает на 1 болше
-	for (size_t counter = 0; counter < readers_size - 1; counter++) {
+	//	TODO: Похоже, что readers_size-1 это потому что медод возвращает на 1 символ больше
+	for (size_t counter = 0; counter < readers_size - 1; ++counter) {
 		if (readers[counter] != '\0') {
 			name_reader[offset++] = readers[counter];
 		} else {
-			printf("%s\n", name_reader);
+			strcpy(READER_LIST[list_count++], name_reader);
 			offset = 0;
 		}
 	}
+	printf("\n++++++++++++++++++++\n");
+	for (int i = 0; i < 3; ++i) {
+		printf("%s\n", READER_LIST[i]);
+	}
+	printf("++++++++++++++++++++\n");
 	//	for (int i = 0; i < 3; i++)
 	//		printf("%s\n", READER_LIST[i]);
 
