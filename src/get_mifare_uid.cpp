@@ -39,18 +39,20 @@
 #include <wintypes.h>
 #endif
 
-struct readers_list {
-	LPSTR name_reader;
-};
-typedef readers_list RD_LIST;
-
 void print_bytes(BYTE* bytes, BYTE bytes_size) {
 	for (BYTE i = 0; i < bytes_size; ++i) {
 		printf("%02X ", bytes[i]);
 	}
 	printf("\n");
 }
-
+int count_readers(const char* readers, const unsigned int readers_size) {
+	//	TODO: Похоже, что readers_size-1 это потому что медод возвращает на 1 символ больше
+	int cnt = 0;
+	for (int i = 0; i < readers_size; ++i) {
+		if (readers[i] == '\0') cnt++;
+	}
+	return cnt - 1;
+}
 int main(int argc, char** argv) {
 	LONG result;
 	SCARDCONTEXT sc_context;
@@ -61,10 +63,10 @@ int main(int argc, char** argv) {
 		printf("%s\n", pcsc_stringify_error(result));
 		return 1;
 	}
-	printf("\nConnection to PC/SC established");
+	printf("\nConnection to PC/SC established\n");
 
 	// calculate required memory size for a list of readers
-	DWORD readers_size = 0;
+	unsigned int readers_size = 0;
 
 	result = SCardListReaders(sc_context, NULL, 0, &readers_size);
 	if (result != SCARD_S_SUCCESS) {
@@ -84,60 +86,31 @@ int main(int argc, char** argv) {
 		printf("%s\n", pcsc_stringify_error(result));
 		return 1;
 	}
-
-	char READER_LIST[3][256];
-
-	char name_reader[256];
-	int list_count = 0;
+	int readers_cnt = count_readers(readers, readers_size);
+	char** READER_LIST = (char**)malloc(readers_cnt * sizeof(char*));
+	;
 	int offset = 0;
-	char* ptr_readers = (char*)malloc(1024);
-	//	TODO: Похоже, что readers_size-1 это потому что медод возвращает на 1 символ больше
-	for (size_t counter = 0; counter < readers_size - 1; ++counter) {
-		if (readers[counter] != '\0') {
-			name_reader[offset++] = readers[counter];
-			*ptr_readers++ = readers[counter];
-		} else {
-			strcpy(READER_LIST[list_count++], name_reader);
-			offset = 0;
-			*ptr_readers++ = '\0';
+	for (int cnt = 0; cnt < readers_cnt; cnt++) {
+		READER_LIST[cnt] = (char*)malloc(1 * sizeof(char*));
+		for (int i = 0; i < readers_size; i++) {
+			//			READER_LIST[cnt] = (char*)realloc(READER_LIST[cnt], (i + 1) * sizeof(char));
+			READER_LIST[cnt][i] = readers[i + offset];
+			if (readers[i] == '\0') {
+				offset += i + 1;
+				printf("%s\n", READER_LIST[cnt]);
+				READER_LIST[cnt] = (char*)realloc(READER_LIST[cnt], (i + 1) * sizeof(char));
+				break;
+			}
 		}
-	}
-
-	printf("\n\nPTR PTR PTR\n\n");
-	printf("%s", ptr_readers - ((readers_size - 1)) + 30*2);
-	printf("\n\nPTR PTR PTR\n\n");
-
-	for (int i = 0; i < 3; ++i) {
-		printf("%s\n", READER_LIST[i]);
-	}
-	printf("++++++++++++++++++++\n");
-
-	printf("\n++++++++++++++++++++\n");
-	for (int i = 0; i < 3; ++i) {
-		printf("%s\n", READER_LIST[i]);
-	}
-	printf("++++++++++++++++++++\n");
-	//	for (int i = 0; i < 3; i++)
-	//		printf("%s\n", READER_LIST[i]);
-
-	printf("\n_____________________________________\n");
-	// take first reader, 256-bytes buffer should be enough
-	char reader_name[256] = {0};
-
-	if (readers_size > 1) {
-		strncpy(reader_name, readers, 255);
-	} else {
-		printf("No readers found!\n");
-		return 2;
 	}
 
 	free(readers);
 
-	printf("Use reader '%s'\n", reader_name);
+	printf("Use reader '%s'\n", READER_LIST[1]);
 
 	// connect to reader and wait for card
 	SCARD_READERSTATE sc_reader_states[1];
-	sc_reader_states[0].szReader = reader_name;
+	sc_reader_states[0].szReader = READER_LIST[1];
 	sc_reader_states[0].dwCurrentState = SCARD_STATE_EMPTY;
 
 	result = SCardGetStatusChange(sc_context, INFINITE, sc_reader_states, 1);
@@ -189,7 +162,7 @@ int main(int argc, char** argv) {
 		printf("Card UID: ");
 		print_bytes(recv_buffer, recv_length - 2);
 	}
-
+	// TODO: free READER_LIST
 	// disconnect from card
 	result = SCardDisconnect(reader, SCARD_RESET_CARD);
 	if (result != SCARD_S_SUCCESS) {

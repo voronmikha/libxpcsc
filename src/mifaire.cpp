@@ -186,8 +186,8 @@ public static final byte[] KEY_0 =
 		auto tlv = xpcsc::BerTlv::parse(response.substr(0, response.size() - 2));
 		auto uid = tlv->get_children();
 		for (const auto &c : tlv->get_children()) {
-			for (const auto& u : c->get_data()) {
-				std::cout << xpcsc::format(u);
+			for (const auto& u : response.substr(0, response.size() - 2)) {
+				std::cout << xpcsc::format(u) << " ";
 			}
 			std::cout << std::endl << std::flush;
 		}
