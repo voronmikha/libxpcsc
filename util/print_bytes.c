@@ -41,10 +41,9 @@
 
 #include "util.h"
 
-void print_bytes(BYTE * bytes, BYTE bytes_size)
-{
-    for (BYTE i=0; i<bytes_size; ++i) {
-        printf("%02X ", bytes[i]);
-    }
-    printf("\n");
+void print_bytes(BYTE* bytes, BYTE bytes_size) {
+	for (BYTE i = 0; i < bytes_size; ++i) {
+		printf("%02X ", bytes[i]);
+	}
+	printf("\n");
 }

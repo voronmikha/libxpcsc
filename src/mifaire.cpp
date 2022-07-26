@@ -76,7 +76,7 @@ struct CardContents {
 };
 
 int main(int argc, char** argv) {
-	xpcsc::Connection c = xpcsc::Connection::get();
+	xpcsc::Connection c;
 
 	try {
 		c.init();

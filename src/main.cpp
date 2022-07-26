@@ -45,33 +45,36 @@ int main() {
 							   .setRemoveDefaultParsers(false);
 
 	prsr.setConfig(config);
-	//    xpcsc::Connection c = xpcsc::Connection::get();
+	xpcsc::Connection c;
 
-	/*    try {
-        c.init();
-    } catch (xpcsc::PCSCError &e) {
-        std::cerr << "[Error] Connection to PC/SC failed: " << e.what() << std::endl;
-        return 1;
-    }*/
+	try {
+		c.init();
+	} catch (xpcsc::PCSCError& e) {
+		std::cerr << "[Error] Connection to PC/SC failed: " << e.what() << std::endl;
+		return 1;
+	}
 	// get readers list
-	auto readers = xpcsc::Connection::get().readers();
+	auto readers = c.readers();
 	if (readers.empty()) {
 		std::cerr << "[Error] No connected readers" << std::endl;
 		//        TODO: Нужно добавить коды и описание ошибок
-		throw xpcsc::PCSCError(1L);
+		std::exit(EXIT_FAILURE);
 	} else {
 		std::cout << "Readers count : " << readers.size() << std::endl;
+		for (const auto& r : readers) {
+			std::cout << r << std::endl;
+		}
 	}
 	try {
 		for (const auto& r : readers) {
 			if (r == "ACS ACR1281 1S Dual Reader(2)") {
 				while (true) {
 
-					xpcsc::Reader reader = xpcsc::Connection::get().wait_for_reader_card(r);
+					xpcsc::Reader reader = c.wait_for_reader_card(r);
 					std::cout << reader.handle << std::endl;
 					xpcsc::Parser parser;
 					auto card = parser.readCard();
-					auto apps = xpcsc::read_apps_from_pse(xpcsc::Connection::get(), reader);
+					auto apps = xpcsc::read_apps_from_pse(c, reader);
 
 					std::cout << "AID APPS" << std::endl;
 
@@ -81,17 +84,17 @@ int main() {
 					std::cout << std::endl << std::flush;
 					if (!apps.empty()) {
 						for (const auto& aid : apps) {
-							auto b = xpcsc::read_app(xpcsc::Connection::get(), reader, aid);
+							auto b = xpcsc::read_app(c, reader, aid);
 						}
-					} else {
+					} /*else {
 						for (const auto& aid : xpcsc::aids()) {
 							std::cout << "IN" << std::endl;
 							if (xpcsc::read_app(xpcsc::Connection::get(), reader, aid)) { break; }
 						}
-					}
-					xpcsc::Connection::get().wait_for_card_remove(r);
+					}*/
+					c.wait_for_card_remove(r);
 					// TODO: Непонятно пока, нужно лы вызывать этот метод
-					xpcsc::Connection::get().disconnect_card(reader, SCARD_LEAVE_CARD);
+					c.disconnect_card(reader, SCARD_LEAVE_CARD);
 				}
 			}
 		}

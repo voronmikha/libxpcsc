@@ -99,15 +99,17 @@ namespace xpcsc {
 		/*
          * Incapsulates pcsc-lite library
          */
-	private:
+	public:
 		Connection();
 
+/*
 	public:
 		static Connection& get() {
 
 			static Connection instance;
 			return instance;
 		}
+*/
 
 		~Connection();
 
