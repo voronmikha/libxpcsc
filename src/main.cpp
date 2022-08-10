@@ -33,75 +33,78 @@
 #include "parser.hpp"
 #include "xpcsc.hpp"
 
-int main() {
-	std::vector<xpcsc::Bytes> aids;
-	xpcsc::Parser prsr;
-	xpcsc::Config config = xpcsc::Config::get()
-							   .setContactLess(false)
-							   .setReadTransactions(false)
-							   .setReadAllAids(false)
-							   .setReadAt(false)
-							   .setReadCplc(false)
-							   .setRemoveDefaultParsers(false);
+int main()
+{
+    std::vector<xpcsc::Bytes> aids;
+    xpcsc::Parser prsr;
+    xpcsc::Config config = xpcsc::Config::get()
+                               .setContactLess(false)
+                               .setReadTransactions(false)
+                               .setReadAllAids(false)
+                               .setReadAt(false)
+                               .setReadCplc(false)
+                               .setRemoveDefaultParsers(false);
 
-	prsr.setConfig(config);
-	xpcsc::Connection c;
+    prsr.setConfig(config);
+    xpcsc::Connection c;
 
-	try {
-		c.init();
-	} catch (xpcsc::PCSCError& e) {
-		std::cerr << "[Error] Connection to PC/SC failed: " << e.what() << std::endl;
-		return 1;
-	}
-	// get readers list
-	auto readers = c.readers();
-	if (readers.empty()) {
-		std::cerr << "[Error] No connected readers" << std::endl;
-		//        TODO: Нужно добавить коды и описание ошибок
-		std::exit(EXIT_FAILURE);
-	} else {
-		std::cout << "Readers count : " << readers.size() << std::endl;
-		for (const auto& r : readers) {
-			std::cout << r << std::endl;
-		}
-	}
-	try {
-		for (const auto& r : readers) {
-			if (r == "ACS ACR1281 1S Dual Reader(2)") {
-				while (true) {
+    try {
+        c.init();
+    } catch (xpcsc::PCSCError &e) {
+        std::cerr << "[Error] Connection to PC/SC failed: " << e.what() << std::endl;
+        return 1;
+    }
+    // get readers list
+    auto readers = c.readers();
+    if (readers.empty()) {
+        std::cerr << "[Error] No connected readers" << std::endl;
+        //        TODO: Нужно добавить коды и описание ошибок
+        std::exit(EXIT_FAILURE);
+    }
+    else {
+        std::cout << "Readers count : " << readers.size() << std::endl;
+        for (const auto &r : readers) {
+            std::cout << r << std::endl;
+        }
+    }
+    try {
+        for (const auto &r : readers) {
+            if (r == "ACS ACR1281 1S Dual Reader(2)") {
+                while (true) {
 
-					xpcsc::Reader reader = c.wait_for_reader_card(r);
-					std::cout << reader.handle << std::endl;
-					xpcsc::Parser parser;
-					auto card = parser.readCard();
-					auto apps = xpcsc::read_apps_from_pse(c, reader);
+                    xpcsc::Reader reader = c.wait_for_reader_card(r);
+                    std::cout << reader.handle << std::endl;
+                    xpcsc::Parser parser;
+                    auto card = parser.readCard();
+                    auto apps = xpcsc::read_apps_from_pse(c, reader);
 
-					std::cout << "AID APPS" << std::endl;
+                    std::cout << "AID APPS" << std::endl;
 
-					for (const auto &ap : apps) {
-						std::cout << xpcsc::format(ap);
-					}
-					std::cout << std::endl << std::flush;
-					if (!apps.empty()) {
-						for (const auto& aid : apps) {
-							xpcsc::read_app(c, reader, aid);
-						}
-					} /*else {
-						for (const auto& aid : xpcsc::aids()) {
-							std::cout << "IN" << std::endl;
-							if (xpcsc::read_app(xpcsc::Connection::get(), reader, aid)) { break; }
-						}
-					}*/
-					c.wait_for_card_remove(r);
-					// TODO: Непонятно пока, нужно лы вызывать этот метод
-					c.disconnect_card(reader, SCARD_LEAVE_CARD);
-					std::cout << "Disconnect Card" << std::endl;
-				}
-			}
-		}
-	} catch (xpcsc::PCSCError& e) {
-		std::cerr << "Wait for card failed: " << e.what() << std::endl;
-		return 1;
-	}
-	return 0;
+                    for (const auto &ap : apps) {
+                        std::cout << xpcsc::format(ap);
+                    }
+                    std::cout << std::endl << std::flush;
+                    if (!apps.empty()) {
+                        for (const auto &aid : apps) {
+                            auto b = xpcsc::read_app(c, reader, aid);
+                        }
+                    } /*else {
+                            for (const auto& aid : xpcsc::aids()) {
+                                    std::cout << "IN" << std::endl;
+                                    if (xpcsc::read_app(xpcsc::Connection::get(), reader, aid)) {
+                    break; }
+                            }
+                    }*/
+                    c.wait_for_card_remove(r);
+                    // TODO: Непонятно пока, нужно лы вызывать этот метод
+                    c.disconnect_card(reader, SCARD_LEAVE_CARD);
+                    std::cout << "Disconnect Card" << std::endl;
+                }
+            }
+        }
+    } catch (xpcsc::PCSCError &e) {
+        std::cerr << "Wait for card failed: " << e.what() << std::endl;
+        return 1;
+    }
+    return 0;
 }
