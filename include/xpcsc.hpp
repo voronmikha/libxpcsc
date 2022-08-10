@@ -58,9 +58,15 @@ namespace xpcsc {
 	typedef std::vector<std::string> Strings;
 	typedef std::unique_ptr<Bytes> UPBytes;
 
-	struct Reader {
-		SCARDHANDLE handle;
-		SCARD_IO_REQUEST* send_pci;
+	class Reader {
+	public:
+//		Reader() = default;
+		~Reader() {
+			delete send_pci;
+			send_pci = nullptr;
+		}
+		SCARDHANDLE handle = 0;
+		SCARD_IO_REQUEST* send_pci = new SCARD_IO_REQUEST;
 	};
 
 	// ATR features constants
@@ -102,7 +108,7 @@ namespace xpcsc {
 	public:
 		Connection();
 
-/*
+		/*
 	public:
 		static Connection& get() {
 
@@ -171,7 +177,8 @@ namespace xpcsc {
 	typedef enum {
 		FormatHex = 0, // HEX, like "01 ef 4d"
 		FormatC,	   // C, like "0x01 0xef 0x4d"
-		FormatE		   // string escaped, like "\x01\xef\x4d"
+		FormatE,		   // string escaped, like "\x01\xef\x4d"
+		FormatCard
 	} FormatOptions;
 
 	typedef Byte BlocksAccessBits[4];

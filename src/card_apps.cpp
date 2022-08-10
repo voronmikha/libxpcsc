@@ -316,6 +316,7 @@ namespace xpcsc {
 
         // print known values
         std::cout << "Card number: " << xpcsc::format(values[0x5A]) << std::endl;
+        std::cout << "Card number formatter: " << xpcsc::format(values[0x5A],FormatCard) << std::endl;
         std::cout << "Card holder name: " << values[0x5F20].c_str() << std::endl;
         std::cout << "Effective date: " << xpcsc::format(values[0x5F25]) << std::endl;
         std::cout << "Exp date: " << xpcsc::format(values[0x5F24]) << std::endl;

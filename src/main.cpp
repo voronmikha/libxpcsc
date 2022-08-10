@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-#include "aids.hpp"
+//#include "aids.hpp"
 #include "card_apps.hpp"
 #include "config.hpp"
 #include "parser.hpp"
@@ -78,13 +78,13 @@ int main() {
 
 					std::cout << "AID APPS" << std::endl;
 
-					for (const auto ap : apps) {
+					for (const auto &ap : apps) {
 						std::cout << xpcsc::format(ap);
 					}
 					std::cout << std::endl << std::flush;
 					if (!apps.empty()) {
 						for (const auto& aid : apps) {
-							auto b = xpcsc::read_app(c, reader, aid);
+							xpcsc::read_app(c, reader, aid);
 						}
 					} /*else {
 						for (const auto& aid : xpcsc::aids()) {
@@ -95,6 +95,7 @@ int main() {
 					c.wait_for_card_remove(r);
 					// TODO: Непонятно пока, нужно лы вызывать этот метод
 					c.disconnect_card(reader, SCARD_LEAVE_CARD);
+					std::cout << "Disconnect Card" << std::endl;
 				}
 			}
 		}

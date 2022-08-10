@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <cstring>
+//#include <cstring>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -65,7 +65,7 @@ namespace xpcsc {
 	}
 
 	void Connection::init() {
-		PCSC_CALL(SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, &(p->context)));
+		PCSC_CALL(SCardEstablishContext(SCARD_SCOPE_SYSTEM, nullptr, nullptr, &(p->context)));
 		PRINT_DEBUG("[D] Created xpcsc::Connection object ");
 	}
 
@@ -76,7 +76,7 @@ namespace xpcsc {
 
 		DWORD readers_buffer_size;
 
-		PCSC_CALL(SCardListReaders(p->context, nullptr, 0, &readers_buffer_size));
+		PCSC_CALL(SCardListReaders(p->context, nullptr, nullptr, &readers_buffer_size));
 
 		// allocate memory and fetch readers list
 		auto readers_buffer = std::make_unique<char[]>(readers_buffer_size);
@@ -93,7 +93,6 @@ namespace xpcsc {
 	}
 
 	xpcsc::Reader Connection::wait_for_reader_card(const std::string& reader_name, DWORD preferred_protocols) {
-		xpcsc::Reader reader;
 
 		CONTEXT_READY_CHECK();
 
@@ -102,7 +101,7 @@ namespace xpcsc {
 
 		sc_reader_states[0].szReader = reader_name.c_str();
 
-		while (1) {
+		while (true) {
 			// get current state
 			sc_reader_states[0].dwCurrentState = SCARD_STATE_UNAWARE;
 			PCSC_CALL(SCardGetStatusChange(p->context, INFINITE, sc_reader_states, 1));
@@ -119,22 +118,18 @@ namespace xpcsc {
 		}
 
 		DWORD active_protocol;
-
+		xpcsc::Reader reader; //{0, nullptr};
 		PCSC_CALL(SCardConnect(p->context, reader_name.c_str(), SCARD_SHARE_SHARED, preferred_protocols,
 							   &(reader.handle), &active_protocol));
-		// FIXME: new ? а где delete ?
-		SCARD_IO_REQUEST* pci = new SCARD_IO_REQUEST;
 		if (active_protocol == SCARD_PROTOCOL_T0) {
-			pci->dwProtocol = SCARD_PCI_T0->dwProtocol;
-			pci->cbPciLength = SCARD_PCI_T0->cbPciLength;
+			reader.send_pci->dwProtocol = SCARD_PCI_T0->dwProtocol;
+			reader.send_pci->cbPciLength = SCARD_PCI_T0->cbPciLength;
 		} else if (active_protocol == SCARD_PROTOCOL_T1) {
-			pci->dwProtocol = SCARD_PCI_T1->dwProtocol;
-			pci->cbPciLength = SCARD_PCI_T1->cbPciLength;
+			reader.send_pci->dwProtocol = SCARD_PCI_T1->dwProtocol;
+			reader.send_pci->cbPciLength = SCARD_PCI_T1->cbPciLength;
 		} else {
 			throw ConnectionError("Not supported protocol!");
 		}
-		reader.send_pci = pci;
-
 		return reader;
 	}
 
@@ -167,7 +162,7 @@ namespace xpcsc {
 
 	void Connection::transmit(const xpcsc::Reader& reader, const Bytes& command, Bytes* response) {
 		const LONG recv_buffer_size = 1024;
-		LONG send_buffer_size = command.length();
+		LONG send_buffer_size = static_cast<LONG>(command.length());
 		DWORD recv_length = recv_buffer_size;
 		Bytes collector;
 
@@ -177,7 +172,7 @@ namespace xpcsc {
 		// Byte *recv_buffer = new Byte[recv_buffer_size];
 
 		try {
-			PCSC_CALL(SCardTransmit(reader.handle, reader.send_pci, command.data(), send_buffer_size, NULL,
+			PCSC_CALL(SCardTransmit(reader.handle, reader.send_pci, command.data(), send_buffer_size, nullptr,
 									recv_buffer.get(), &recv_length));
 
 			// analyze response status, if it's 61XX then more data available
@@ -195,7 +190,7 @@ namespace xpcsc {
 					cmd_get_response[4] = size;
 
 					recv_length = recv_buffer_size;
-					PCSC_CALL(SCardTransmit(reader.handle, reader.send_pci, cmd_get_response, 5, NULL,
+					PCSC_CALL(SCardTransmit(reader.handle, reader.send_pci, cmd_get_response, 5, nullptr,
 											recv_buffer.get(), &recv_length));
 
 					if (recv_length < 2) { throw ConnectionError("Invalid response (length<2)"); }

@@ -25,73 +25,81 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sstream>
-
 #include "../include/xpcsc.hpp"
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 
 namespace xpcsc {
 
-const char *format_strings[] = {"%02X", "0x%02x", "\\x%02X"};
-const char *sep_strings[] = {" ", ", ", ""};
+	template<typename I>
+	std::string n2hexstr(I w, size_t hex_len = sizeof(I) << 1) {
+		static const char* digits = "0123456789ABCDEF";
+		std::string rc(hex_len, '0');
+		for (size_t i = 0, j = (hex_len - 1) * 4; i < hex_len; ++i, j -= 4)
+			rc[i] = digits[(w >> j) & 0x0f];
+		return rc;
+	}
 
-std::string format(const Bytes & b, FormatOptions fo)
-{
-    char cbuf[32];
-    const auto fmt = format_strings[fo];
-    const auto sep = std::string(sep_strings[fo]);
+	const char* format_strings[] = {"%02X", "0x%02x", "\\x%02X", "%02X"};
+	const char* sep_strings[] = {" ", ", ", "", " "};
 
-    auto i = b.begin();
-    auto end = b.end();
-    std::stringstream ss;
+	std::string format(const Bytes& b, FormatOptions fo) {
+		char cbuf[32];
+		const auto fmt = format_strings[fo];
+		const auto sep = std::string(sep_strings[fo]);
 
-    while (1) {
-        if (i == end) {
-            break;
-        }
-        snprintf(cbuf, 31, fmt, *i);
-        ss << cbuf;
-        i++;
-        if (i != end) {
-            ss << sep;
-        }
-    }
+		auto i = b.begin();
+		auto end = b.end();
+		std::stringstream ss;
+		std::stringstream s;
+		std::stringstream res;
 
-    return ss.str();
-}
+		if (fo == FormatCard) { // TODO: Перенести в Card
+			auto tr([](Byte a) { return n2hexstr(a); });
+			std::transform(b.begin(), b.end(), std::ostream_iterator<std::string>{s}, tr);
+			for (int pos = 1; pos < s.str().length() + 1; ++pos) {
+				if (pos != 0 && (pos % 4) == 0) {
+					ss << s.str()[pos - 1] << " ";
+				} else
+					ss << s.str()[pos - 1];
+			}
+		} else {
+			while (true) {
+				if (i == end) { break; }
+				snprintf(cbuf, 31, fmt, *i);
+				ss << cbuf;
+				i++;
+				if (i != end) { ss << sep; }
+			}
+		}
+		return ss.str();
+	}
 
-std::string format(const Byte & c, FormatOptions fo)
-{
-    char cbuf[32];
-    const auto fmt = format_strings[fo];
+	std::string format(const Byte& c, FormatOptions fo) {
+		char cbuf[32];
+		const auto fmt = format_strings[fo];
 
-    snprintf(cbuf, 31, fmt, c);
-    return cbuf;
-}
+		snprintf(cbuf, 31, fmt, c);
+		return cbuf;
+	}
 
-std::string format(const BerTlv & tlv, FormatOptions fo, uint8_t indent_level)
-{
-    std::stringstream ss;
-    std::string indent(2*indent_level, ' ');
-    const auto & tag = tlv.get_tag();
-       
-    if (tag.size() != 0) {
-        ss << indent << "Tag: " << format(tlv.get_tag(), fo) << "\n";
-    }
-    if (tlv.is_raw()) {
-        ss << indent << "Data: " << format(tlv.get_data(), fo) << "\n";
-    }
-    const auto & items = tlv.get_children();
-    BerTlvList::const_iterator i;
+	std::string format(const BerTlv& tlv, FormatOptions fo, uint8_t indent_level) {
+		std::stringstream ss;
+		std::string indent(2 * indent_level, ' ');
+		const auto& tag = tlv.get_tag();
 
-    for (i=items.begin(); i!=items.end(); i++) {
-        ss << format(*(*i), fo, indent_level+1);
-    }
-    return ss.str();
-}
+		if (tag.size() != 0) { ss << indent << "Tag: " << format(tlv.get_tag(), fo) << "\n"; }
+		if (tlv.is_raw()) { ss << indent << "Data: " << format(tlv.get_data(), fo) << "\n"; }
+		const auto& items = tlv.get_children();
+		BerTlvList::const_iterator i;
 
-std::string format(const BerTlv & tlv, FormatOptions fo)
-{
-    return format(tlv, fo, 0);
-}
+		for (i = items.begin(); i != items.end(); i++) {
+			ss << format(*(*i), fo, indent_level + 1);
+		}
+		return ss.str();
+	}
 
-}
+	std::string format(const BerTlv& tlv, FormatOptions fo) { return format(tlv, fo, 0); }
+
+} // namespace xpcsc
